@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#060B18">
+<meta name="description" content="نموذج تجريبي (Concept) لموقع مكتب محاماة بمجسم ثلاثي الأبعاد تفاعلي باستخدام Three.js وGSAP.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="مكتب الحق | موقع محاماة بتقنية 3D (Concept)">
+<meta property="og:description" content="نموذج تجريبي لموقع مكتب محاماة بميزان عدالة ثلاثي الأبعاد تفاعلي.">
+<meta property="og:locale" content="ar_AR">
+<title>مكتب الحق | موقع محاماة بتقنية 3D (Concept)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='29' fill='%23060B18' stroke='%23D4AF37' stroke-width='3'/%3E%3Cpath d='M32 14v34M18 22h28M18 22l-6 14h12zM46 22l-6 14h12zM22 50h20' fill='none' stroke='%23D4AF37' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060B18;--navy:#0B1224;--gold:#D4AF37;--gold2:#E8C872;--text:#E9ECF4;--muted:#9AA3B8;--line:#d4af3730}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:'Cairo',system-ui,sans-serif;line-height:1.8;overflow-x:hidden}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gold2);outline-offset:3px;border-radius:6px}
+.skip{position:fixed;top:-60px;inset-inline-start:12px;z-index:100;background:var(--gold);color:#1a1405;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700}
+.skip:focus{top:12px}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.no-webgl #gl{display:none}
+.no-webgl body,.no-webgl{background:radial-gradient(ellipse 60% 60% at 25% 45%,#16275a 0%,transparent 70%),var(--bg)}
+
+/* preloader */
+#pre{position:fixed;inset:0;z-index:200;background:var(--bg);display:grid;place-items:center;animation:preOut .6s ease 5s forwards}
+@keyframes preOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+#pre .wrap{text-align:center}
+#pre .mark{width:74px;height:74px;margin:0 auto 18px;border:1.5px solid var(--gold);border-radius:50%;display:grid;place-items:center;font:700 38px 'Amiri',serif;color:var(--gold);animation:pulse 1.6s ease-in-out infinite}
+#pre .bar{width:180px;height:2px;background:#ffffff1a;margin:0 auto;overflow:hidden;border-radius:2px}
+#pre .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+#pre small{display:block;margin-top:14px;color:var(--muted);font-size:13px;letter-spacing:0}
+@keyframes pulse{50%{box-shadow:0 0 34px #d4af3766}}
+
+/* custom cursor */
+.cur{position:fixed;top:0;left:0;z-index:150;pointer-events:none;width:34px;height:34px;margin:-17px 0 0 -17px;border:1.5px solid #e8c872aa;border-radius:50%;transition:width .25s,height .25s,margin .25s,background .25s,opacity .3s;opacity:0}
+.cur.on{opacity:1}
+.cur.big{width:64px;height:64px;margin:-32px 0 0 -32px;background:#d4af3718}
+@media (hover:none),(pointer:coarse){.cur{display:none}}
+
+/* header */
+header{position:fixed;top:0;inset-inline:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px clamp(18px,5vw,64px);transition:background .3s,backdrop-filter .3s,border-color .3s;border-bottom:1px solid transparent}
+header.scrolled{background:#060b18d9;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:#ffffff10}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo-mark{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;font:700 22px 'Amiri',serif;color:var(--gold)}
+.logo b{font:700 22px 'Amiri',serif;display:block;line-height:1.2}
+.logo small{font-size:11px;color:var(--gold);display:block}
+nav{display:flex;gap:6px;font-size:15px}
+nav a{color:var(--muted);text-decoration:none;padding:6px 14px;border-radius:999px;transition:color .2s,background .2s}
+nav a:hover{color:var(--gold2)}
+nav a.act{color:var(--gold2);background:#d4af3716}
+.btn{display:inline-block;padding:12px 28px;border-radius:999px;font:600 15px 'Cairo',sans-serif;text-decoration:none;cursor:pointer;border:1.5px solid var(--gold);transition:transform .2s,box-shadow .25s,background .2s;will-change:transform}
+.btn-gold{background:linear-gradient(135deg,#E8C872,#C9A227);color:#1a1405;box-shadow:0 8px 28px -10px #c9a227}
+.btn-gold:hover{box-shadow:0 14px 36px -8px #c9a227}
+.btn-line{background:transparent;color:var(--text)}
+.btn-line:hover{background:#d4af3718}
+.burger{display:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:#0b1224aa;color:var(--text);cursor:pointer;place-items:center}
+.burger span,.burger span:before,.burger span:after{display:block;width:20px;height:2px;background:currentColor;border-radius:2px;position:relative;transition:transform .3s,background .3s}
+.burger span:before,.burger span:after{content:"";position:absolute;inset-inline-start:0}
+.burger span:before{top:-6px}.burger span:after{top:6px}
+.burger[aria-expanded=true] span{background:transparent}
+.burger[aria-expanded=true] span:before{transform:translateY(6px) rotate(45deg)}
+.burger[aria-expanded=true] span:after{transform:translateY(-6px) rotate(-45deg)}
+#menu{position:fixed;inset:0;z-index:55;background:#060b18f2;backdrop-filter:blur(16px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .3s}
+#menu.open{opacity:1;pointer-events:auto}
+#menu a{font:700 34px 'Amiri',serif;text-decoration:none;padding:8px 24px;color:var(--text)}
+#menu a:hover{color:var(--gold2)}
+
+main{position:relative;z-index:5}
+section{min-height:100vh;display:flex;align-items:center;padding:110px clamp(18px,6vw,90px) 70px}
+.col{width:min(560px,100%)}
+.col.left{margin-inline-start:auto;margin-inline-end:0}
+.eyebrow{color:var(--gold);font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.eyebrow:before{content:"";width:34px;height:1.5px;background:var(--gold)}
+h1,h2{font-family:'Amiri',serif;font-weight:700;line-height:1.35}
+h1{font-size:clamp(42px,6.4vw,76px)}
+h2{font-size:clamp(32px,4.4vw,52px);margin-bottom:12px}
+h1 em,h2 em{font-style:normal;color:var(--gold2)}
+.w{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.12em}
+.w>i{display:inline-block;font-style:inherit}
+.lead{color:#c3c9d8;font-size:clamp(16px,1.6vw,19px);margin:18px 0 30px}
+.actions{display:flex;gap:14px;flex-wrap:wrap}
+.hint{margin-top:34px;color:var(--muted);font-size:13px;display:flex;align-items:center;gap:10px}
+.hint i{width:20px;height:32px;border:1.5px solid var(--muted);border-radius:12px;position:relative;flex:none}
+.hint i:after{content:"";position:absolute;top:6px;left:50%;width:3px;height:6px;margin-left:-1.5px;border-radius:2px;background:var(--gold);animation:dot 1.6s infinite}
+@keyframes dot{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(12px)}}
+.glass{background:#0b1224b8;border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:26px}
+.card{padding:22px;border-radius:18px;transition:transform .3s,border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
+.card:hover,.card:focus-within{transform:translateY(-6px);border-color:var(--gold);box-shadow:0 18px 40px -20px #d4af37}
+.card .no{position:absolute;top:10px;inset-inline-end:16px;font:700 34px 'Amiri',serif;color:#d4af3726}
+.card .ic{width:44px;height:44px;border-radius:12px;background:#d4af3720;border:1px solid #d4af3755;display:grid;place-items:center;color:var(--gold2);margin-bottom:12px}
+.card .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.card h3{font-size:18px;margin-bottom:4px}
+.card p{font-size:14px;color:var(--muted);line-height:1.7}
+.steps{list-style:none;margin-top:26px;display:grid;gap:14px;counter-reset:s}
+.steps li{display:flex;gap:16px;padding:18px 20px;border-radius:16px;align-items:flex-start;counter-increment:s}
+.steps li:before{content:counter(s,decimal-leading-zero);font:700 30px 'Amiri',serif;color:var(--gold);line-height:1;min-width:42px}
+.steps b{display:block;font-size:17px}
+.steps span{font-size:14px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px}
+.stat{padding:20px 12px;text-align:center;border-radius:16px}
+.stat b{font:700 36px 'Amiri',serif;color:var(--gold2);display:block;line-height:1.1}
+.stat span{font-size:13px;color:var(--muted)}
+.note{margin-top:14px;font-size:12px;color:var(--muted)}
+details{border-radius:14px;margin-bottom:12px;overflow:hidden}
+summary{cursor:pointer;padding:16px 20px;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"+";font-size:22px;color:var(--gold);transition:transform .3s}
+details[open] summary:after{transform:rotate(45deg)}
+details p{padding:0 20px 18px;color:var(--muted);font-size:15px}
+.form{padding:clamp(22px,4vw,34px);border-radius:24px}
+.form label{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px}
+.form input,.form select,.form textarea{width:100%;background:#060b18;border:1px solid #ffffff18;border-radius:12px;padding:12px 14px;color:var(--text);font:400 15px 'Cairo',sans-serif;transition:border-color .2s}
+.form input:focus,.form select:focus,.form textarea:focus{outline:none;border-color:var(--gold)}
+.form textarea{min-height:90px;resize:vertical}
+.form .btn{width:100%;margin-top:20px;text-align:center}
+.ok{display:none;margin-top:16px;padding:14px;border-radius:12px;background:#1d3a2a;border:1px solid #2f7a4f;color:#bff0d2;font-size:14px}
+.ok.show{display:block}
+footer{position:relative;z-index:5;border-top:1px solid #ffffff12;background:#060b18f7;padding:46px clamp(18px,6vw,90px) 26px}
+.fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:30px;max-width:1100px;margin:auto}
+footer h4{font:700 18px 'Amiri',serif;color:var(--gold2);margin-bottom:10px}
+footer p,footer li{color:var(--muted);font-size:14px}
+footer ul{list-style:none}
+footer a{text-decoration:none}footer a:hover{color:var(--gold2)}
+.copy{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #ffffff10;color:var(--muted);font-size:12px}
+.top{position:fixed;bottom:20px;inset-inline-start:20px;z-index:40;width:46px;height:46px;border-radius:50%;border:1px solid var(--gold);background:#0b1224cc;color:var(--gold2);cursor:pointer;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;backdrop-filter:blur(8px)}
+.top.show{opacity:1;pointer-events:auto}.top:hover{transform:translateY(-3px)}
+.fallback{display:none;position:fixed;inset-inline:0;bottom:12px;z-index:30;text-align:center;font-size:13px;color:var(--muted)}
+.no-webgl .fallback{display:block}
+
+@media (max-width:800px),(max-aspect-ratio:11/10){
+  nav,header>.btn{display:none}
+  .burger{display:grid}
+  section{align-items:flex-start;padding-top:96px}
+  .col,.col.left{margin-inline:0;background:#060b18b0;border-radius:22px;padding:22px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .cards{grid-template-columns:1fr}
+  .stats{gap:8px}.stat b{font-size:28px}
+  #hero{min-height:100vh;align-items:flex-end;padding-bottom:28px}
+  #hero .col{padding:20px}
+  #hero .lead{font-size:15px;margin:12px 0 20px}
+  #hero h1{font-size:40px}
+  .hint{display:none}
+  .btn{padding:11px 22px}
+  .fgrid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">تخطَّ إلى المحتوى</a>
+<div id="pre" aria-hidden="true"><div class="wrap"><div class="mark">ح</div><div class="bar"><i></i></div><small>جارٍ التحميل</small></div></div>
+<div class="cur" aria-hidden="true"></div>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="fallback">يتعذر عرض المجسم ثلاثي الأبعاد على هذا الجهاز.</div>
+
+<header id="hd">
+  <a class="logo" href="#hero" aria-label="مكتب الحق، الرئيسية">
+    <span class="logo-mark">ح</span>
+    <span><b>مكتب الحق</b><small>للمحاماة والاستشارات</small></span>
+  </a>
+  <nav aria-label="القائمة الرئيسية">
+    <a href="#hero">الرئيسية</a><a href="#services">خدماتنا</a><a href="#process">كيف نعمل</a><a href="#about">عن المكتب</a><a href="#faq">أسئلة شائعة</a><a href="#contact">تواصل معنا</a>
+  </nav>
+  <a class="btn btn-gold mag" href="#contact">استشارة مجانية</a>
+  <button class="burger" id="burger" aria-label="القائمة" aria-expanded="false" aria-controls="menu"><span></span></button>
+</header>
+<div id="menu" role="dialog" aria-label="القائمة">
+  <a href="#hero">الرئيسية</a><a href="#services">خدماتنا</a><a href="#process">كيف نعمل</a><a href="#about">عن المكتب</a><a href="#faq">أسئلة شائعة</a><a href="#contact">تواصل معنا</a>
+</div>
+
+<main id="main">
+  <section id="hero">
+    <div class="col">
+      <div class="eyebrow">التميّز في الدفاع عن حقوقك</div>
+      <h1 id="h1">عدالة تُبنى<br>على <em>الثقة</em></h1>
+      <p class="lead">خبرة قانونية وفريق متخصص ونهج احترافي يضمن لك أفضل النتائج في القضايا المدنية والتجارية والجنائية.</p>
+      <div class="actions">
+        <a class="btn btn-gold mag" href="#contact">احجز استشارتك الآن</a>
+        <a class="btn btn-line mag" href="#services">تعرّف على خدماتنا</a>
+      </div>
+      <div class="hint"><i></i><span>حرّك الماوس، مرّر للأسفل، أو اضغط على الميزان</span></div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="col left">
+      <div class="eyebrow">مجالات الممارسة</div>
+      <h2>خدمات قانونية <em>شاملة</em></h2>
+      <p class="lead" style="margin-bottom:0">نغطي أهم التخصصات القانونية بفريق لكل مجال. مرّر المؤشر على أي خدمة وشاهد الميزان.</p>
+      <div class="cards">
+        <article class="card glass" tabindex="0"><span class="no">01</span><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v18M6 7h12M6 7l-3 7h6zM18 7l-3 7h6zM8 21h8"/></svg></div><h3>القضايا المدنية</h3><p>منازعات العقود والتعويضات والملكية.</p></article>
+        <article class="card glass" tabindex="0"><span class="no">02</span><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 21V8l8-5 8 5v13M9 21v-6h6v6M8 11h.01M12 11h.01M16 11h.01"/></svg></div><h3>الشركات والتجاري</h3><p>تأسيس الشركات والعقود والنزاعات التجارية.</p></article>
+        <article class="card glass" tabindex="0"><span class="no">03</span><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>القضايا الجنائية</h3><p>الدفاع أمام المحاكم بمختلف درجاتها.</p></article>
+        <article class="card glass" tabindex="0"><span class="no">04</span><div class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 20c0-2.3 1.6-4.2 3.8-4.6"/></svg></div><h3>الأحوال الشخصية</h3><p>قضايا الأسرة بسرية واحترام للخصوصية.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="process">
+    <div class="col">
+      <div class="eyebrow">كيف نعمل</div>
+      <h2>أربع خطوات <em>واضحة</em></h2>
+      <ol class="steps">
+        <li class="glass"><div><b>استشارة أولية</b><span>نستمع إلى قضيتك ونحدد موقفك القانوني.</span></div></li>
+        <li class="glass"><div><b>دراسة ومراجعة</b><span>نراجع المستندات ونقيّم فرص القضية.</span></div></li>
+        <li class="glass"><div><b>خطة العمل</b><span>نضع استراتيجية واضحة وخطوات محددة.</span></div></li>
+        <li class="glass"><div><b>التنفيذ والمتابعة</b><span>نمثّلك ونوافيك بكل تطور أولاً بأول.</span></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="col left">
+      <div class="eyebrow">عن المكتب</div>
+      <h2>خبرة <em>وثقة</em> منذ سنوات</h2>
+      <p class="lead" style="margin-bottom:0">يقوم المكتب على مبادئ النزاهة والكفاءة والسرية، ويقدّم لعملائه حلولاً قانونية متكاملة.</p>
+      <div class="stats">
+        <div class="stat glass"><b data-n="22">0</b><span>سنة خبرة *</span></div>
+        <div class="stat glass"><b data-n="1800">0</b><span>قضية ناجحة *</span></div>
+        <div class="stat glass"><b data-n="14">0</b><span>محامٍ متخصص *</span></div>
+      </div>
+      <p class="note">* أرقام تجريبية لعرض التصميم فقط.</p>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="col">
+      <div class="eyebrow">أسئلة شائعة</div>
+      <h2>إجابات <em>سريعة</em></h2>
+      <div style="margin-top:22px">
+        <details class="glass"><summary>كيف أحجز استشارة؟</summary><p>من خلال نموذج التواصل أسفل الصفحة، وسيتم تحديد موعد مناسب لك.</p></details>
+        <details class="glass"><summary>هل بياناتي سرية؟</summary><p>السرية المهنية أساس عملنا، وكل ما تشاركه مع المكتب محمي.</p></details>
+        <details class="glass"><summary>كم تستغرق القضية؟</summary><p>تختلف المدة حسب نوع القضية ودرجة التقاضي، ونقدّم تقديراً واضحاً بعد دراسة الملف.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="col left">
+      <div class="eyebrow">تواصل معنا</div>
+      <h2>ابدأ بخطوة <em>واحدة</em></h2>
+      <form class="form glass" id="form" novalidate>
+        <label for="f1">الاسم الكامل</label><input id="f1" name="n" autocomplete="name" placeholder="اكتب اسمك" required>
+        <label for="f2">نوع الاستشارة</label>
+        <select id="f2"><option>قضايا مدنية</option><option>شركات وتجاري</option><option>قضايا جنائية</option><option>أحوال شخصية</option></select>
+        <label for="f3">تفاصيل موجزة</label><textarea id="f3" placeholder="اكتب باختصار عن قضيتك..."></textarea>
+        <button class="btn btn-gold mag" type="submit">إرسال الطلب</button>
+        <div class="ok" id="ok" role="status">تم استلام الطلب (نموذج تجريبي، لا يتم إرسال أو حفظ أي بيانات).</div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="fgrid">
+    <div><h4>مكتب الحق</h4><p>للمحاماة والاستشارات القانونية. مشروع Concept لعرض تقنيات الويب الحديثة (Three.js · GSAP · WebGL).</p></div>
+    <div><h4>روابط</h4><ul><li><a href="#services">خدماتنا</a></li><li><a href="#process">كيف نعمل</a></li><li><a href="#about">عن المكتب</a></li><li><a href="#faq">أسئلة شائعة</a></li></ul></div>
+    <div><h4>التواصل</h4><ul><li>سيتم إضافة العنوان هنا</li><li>سيتم إضافة أرقام المكتب هنا</li><li>السبت – الخميس: 9 صباحاً – 6 مساءً</li></ul></div>
+  </div>
+  <div class="copy">الأسماء والأرقام والبيانات في هذا الموقع افتراضية لأغراض العرض فقط.</div>
+</footer>
+<button class="top" id="top" aria-label="العودة للأعلى"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<noscript><p style="position:fixed;bottom:0;inset-inline:0;text-align:center;padding:10px;background:#0b1224">يتطلب هذا الموقع تفعيل JavaScript.</p></noscript>
+
+<script src="gsap.min.js"></script>
+<script src="ScrollTrigger.min.js"></script>
+<script type="importmap">{"imports":{"three":"./three.module.min.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {EffectComposer,RenderPass,UnrealBloomPass,OutputPass} from './fx.js';
+
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isNarrow=()=>innerWidth<=800||innerWidth/innerHeight<1.1;
+gsap.registerPlugin(ScrollTrigger);
+
+/* ---------- UI ---------- */
+const hd=$('#hd'), topBtn=$('#top');
+const onScroll=()=>{hd.classList.toggle('scrolled',scrollY>30);topBtn.classList.toggle('show',scrollY>innerHeight*0.8)};
+addEventListener('scroll',onScroll,{passive:true}); onScroll();
+topBtn.onclick=()=>scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+const burger=$('#burger'), menu=$('#menu');
+const setMenu=o=>{burger.setAttribute('aria-expanded',o);menu.classList.toggle('open',o);document.body.style.overflow=o?'hidden':''};
+burger.onclick=()=>setMenu(burger.getAttribute('aria-expanded')!=='true');
+$$('#menu a').forEach(a=>a.onclick=()=>setMenu(false));
+addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
+/* active nav link */
+const navLinks=$$('nav a');
+$$('main section').forEach(s=>{
+  new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)navLinks.forEach(a=>a.classList.toggle('act',a.getAttribute('href')==='#'+s.id))}),{rootMargin:'-45% 0px -50% 0px'}).observe(s);
+});
+/* form (demo) */
+$('#form').addEventListener('submit',e=>{e.preventDefault();$('#ok').classList.add('show');e.target.reset()});
+/* custom cursor + magnetic buttons */
+const cur=$('.cur'); let cx=-100,cy=-100,tx=-100,ty=-100;
+if(matchMedia('(hover:hover) and (pointer:fine)').matches){
+  addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;cur.classList.add('on');
+    cur.classList.toggle('big',!!e.target.closest('a,button,.card,summary,input,select,textarea'))},{passive:true});
+  (function f(){cx+=(tx-cx)*0.2;cy+=(ty-cy)*0.2;cur.style.transform=`translate(${cx}px,${cy}px)`;requestAnimationFrame(f)})();
+  if(!reduce) $$('.mag').forEach(b=>{
+    b.addEventListener('pointermove',e=>{const r=b.getBoundingClientRect();gsap.to(b,{x:(e.clientX-r.left-r.width/2)*0.25,y:(e.clientY-r.top-r.height/2)*0.35,duration:.3})});
+    b.addEventListener('pointerleave',()=>gsap.to(b,{x:0,y:0,duration:.6,ease:'elastic.out(1,0.4)'}));
+  });
+}
+/* word-split headline */
+function split(el){
+  [...el.childNodes].forEach(n=>{
+    if(n.nodeType===3){
+      const f=document.createDocumentFragment();
+      n.textContent.split(/(\s+)/).forEach(t=>{ if(!t.trim()){f.append(t);return}
+        const w=document.createElement('span');w.className='w';const i=document.createElement('i');i.textContent=t;w.append(i);f.append(w)});
+      n.replaceWith(f);
+    } else if(n.nodeType===1 && n.tagName!=='BR') split(n);
+  });
+}
+split($('#h1'));
+
+/* counters */
+$$('[data-n]').forEach(el=>{
+  const end=+el.dataset.n,o={v:0};
+  ScrollTrigger.create({trigger:el,start:'top bottom',once:true,onEnter:()=>gsap.to(o,{v:end,duration:1.8,ease:'power2.out',onUpdate:()=>{el.textContent=(end>=100?'+':'')+Math.round(o.v)}})});
+});
+/* scroll reveals (hero handled after preloader) */
+$$('main section:not(#hero) .col > *').forEach(el=>{
+  if(reduce)return;
+  gsap.from(el,{y:34,opacity:0,duration:.9,ease:'power3.out',scrollTrigger:{trigger:el,start:'top bottom-=40',once:true}});
+});
+$$('.steps li').forEach((el,i)=>{ if(reduce)return;
+  gsap.from(el,{x:-40,opacity:0,duration:.8,delay:i*0.08,ease:'power3.out',scrollTrigger:{trigger:el,start:'top bottom-=30',once:true}})});
+
+/* ---------- WebGL ---------- */
+const canvas=$('#gl');
+let renderer=null;
+try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'}); }
+catch(e){ document.documentElement.classList.add('no-webgl'); document.body.classList.add('no-webgl'); }
+
+let introGo=()=>{};
+let hover={v:0}; const st={rot:0.6,x:0,y:-1.3,s:1,tilt:0};
+
+if(renderer){
+  const lowEnd=isNarrow();
+  renderer.setPixelRatio(Math.min(devicePixelRatio,lowEnd?1.5:2));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.15;
+  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();document.body.classList.add('no-webgl')});
+
+  const scene=new THREE.Scene();
+  { const c=document.createElement('canvas'); c.width=c.height=512; const g=c.getContext('2d');
+    g.fillStyle='#060B18'; g.fillRect(0,0,512,512);
+    let r=g.createRadialGradient(150,230,0,150,230,330); r.addColorStop(0,'#17296a'); r.addColorStop(1,'rgba(6,11,24,0)'); g.fillStyle=r; g.fillRect(0,0,512,512);
+    r=g.createRadialGradient(480,512,0,480,512,300); r.addColorStop(0,'#4a3710'); r.addColorStop(1,'rgba(6,11,24,0)'); g.fillStyle=r; g.fillRect(0,0,512,512);
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; scene.background=t; }
+  const camera=new THREE.PerspectiveCamera(32,1,0.1,100);
+  camera.position.set(0,2.2,12.5); camera.lookAt(0,2.1,0);
+
+  const pmrem=new THREE.PMREMGenerator(renderer);
+  const envScene=new THREE.Scene();
+  envScene.add(new THREE.Mesh(new THREE.SphereGeometry(12,32,16),new THREE.MeshBasicMaterial({color:0x0a1430,side:THREE.BackSide})));
+  const panel=(x,y,z,w,h,k,c)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(c).multiplyScalar(k),side:THREE.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);envScene.add(m)};
+  panel(5,6,5,6,3,7,0xfff1cf); panel(-6,3,4,3,6,3.5,0x9db4ff); panel(0,-5,-5,7,2,2.5,0xd4af37); panel(0,7,-5,7,2,4,0xffffff); panel(7,1,-3,2,5,2,0xffe2a0);
+  scene.environment=pmrem.fromScene(envScene,0.03).texture;
+  scene.add(new THREE.AmbientLight(0x8899cc,0.35));
+  const key=new THREE.DirectionalLight(0xffe6b0,2.2); key.position.set(4,7,6); scene.add(key);
+  const rim=new THREE.DirectionalLight(0x6f8cff,1.6); rim.position.set(-6,4,-4); scene.add(rim);
+  const mlight=new THREE.PointLight(0xffd88a,70,0,2); mlight.position.set(0,3,5); scene.add(mlight);
+
+  const composer=new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.38,0.5,0.85);
+  composer.addPass(bloom); composer.addPass(new OutputPass());
+
+  const gold=new THREE.MeshStandardMaterial({color:0xd9b44a,metalness:1,roughness:0.26,envMapIntensity:1.25});
+  const goldDark=new THREE.MeshStandardMaterial({color:0xa8841f,metalness:1,roughness:0.42,envMapIntensity:1});
+  const chainMat=new THREE.MeshStandardMaterial({color:0xe8c872,metalness:1,roughness:0.2,envMapIntensity:1.3});
+  const dbl=gold.clone(); dbl.side=THREE.DoubleSide;
+  const lathe=(pts,mat,seg=64)=>new THREE.Mesh(new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])),seg),mat);
+  const rod=(a,b,r,mat)=>{const d=new THREE.Vector3().subVectors(b,a);const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),8),mat);m.position.copy(a).add(b).multiplyScalar(0.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());return m};
+
+  const scale=new THREE.Group(); scene.add(scale);
+  scale.add(lathe([[0.001,0],[1.45,0],[1.45,0.07],[1.3,0.13],[1.3,0.2],[1.0,0.27],[0.62,0.36],[0.42,0.5],[0.3,0.7],[0.22,0.95]],goldDark));
+  const col=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.15,2.7,24),gold); col.position.y=2.1; scale.add(col);
+  [1.1,2.1,3.1].forEach((y,i)=>{const r=new THREE.Mesh(new THREE.TorusGeometry(0.17-i*0.015,0.045,12,32),gold);r.rotation.x=Math.PI/2;r.position.y=y;scale.add(r)});
+  const top=new THREE.Mesh(new THREE.SphereGeometry(0.2,32,24),gold); top.position.y=3.62; scale.add(top);
+  const crown=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.3,16),gold); crown.position.y=3.95; scale.add(crown);
+
+  /* soft golden glow on the floor */
+  { const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d');
+    const r=g.createRadialGradient(128,128,0,128,128,128); r.addColorStop(0,'rgba(255,205,110,.55)'); r.addColorStop(.5,'rgba(255,190,90,.14)'); r.addColorStop(1,'rgba(255,190,90,0)');
+    g.fillStyle=r; g.fillRect(0,0,256,256);
+    const floor=new THREE.Mesh(new THREE.PlaneGeometry(6,6),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}));
+    floor.rotation.x=-Math.PI/2; floor.position.y=0.01; floor.userData.floor=1; scale.add(floor); floor.material.opacity=reduce?1:0; window.__floor=floor; }
+
+  const rings=[];
+  [[2.35,0.011,1.32,0.0],[2.75,0.008,1.12,1.0]].forEach(([r,t,rx,ry],i)=>{
+    const m=new THREE.MeshBasicMaterial({color:new THREE.Color(0xffc65a).multiplyScalar(1.6),toneMapped:false,transparent:true,opacity:0.55});
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,220),m);
+    ring.position.y=2.1; ring.rotation.set(Math.PI/2+rx,ry,0); ring.userData.ring=i; scale.add(ring); rings.push(ring);
+  });
+
+  const beam=new THREE.Group(); beam.position.y=3.5; scale.add(beam);
+  const bar=new THREE.Mesh(new THREE.CapsuleGeometry(0.055,3.3,6,16),gold); bar.rotation.z=Math.PI/2; beam.add(bar);
+  const pans=[];
+  [-1,1].forEach(s=>{
+    const end=new THREE.Mesh(new THREE.SphereGeometry(0.11,24,16),gold); end.position.x=s*1.7; beam.add(end);
+    const g=new THREE.Group(); g.position.x=s*1.7; beam.add(g);
+    const H=-1.95;
+    [90,210,330].forEach(deg=>{const a=deg*Math.PI/180;g.add(rod(new THREE.Vector3(0,-0.05,0),new THREE.Vector3(Math.cos(a)*0.74,H+0.07,Math.sin(a)*0.74),0.012,chainMat))});
+    const pan=lathe([[0.001,-0.1],[0.4,-0.085],[0.65,-0.03],[0.8,0.09],[0.77,0.11],[0.64,0.03],[0.4,-0.035],[0.001,-0.055]],dbl,64); pan.position.y=H; g.add(pan);
+    pans.push(g);
+  });
+
+  const N=lowEnd?380:700,pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){pos[i*3]=(Math.random()-.5)*16;pos[i*3+1]=(Math.random()-.5)*11+2;pos[i*3+2]=(Math.random()-.5)*9-1}
+  const pg=new THREE.BufferGeometry(); pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const dust=new THREE.Points(pg,new THREE.PointsMaterial({color:0xe8c872,size:0.035,transparent:true,opacity:0.55,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true}));
+  scene.add(dust);
+
+  const ptr={x:0,y:0,tx:0,ty:0};
+  addEventListener('pointermove',e=>{ptr.tx=(e.clientX/innerWidth-.5)*2;ptr.ty=(e.clientY/innerHeight-.5)*2},{passive:true});
+
+  function resize(){
+    const w=innerWidth,h=innerHeight;
+    renderer.setSize(w,h,false); composer.setPixelRatio(Math.min(devicePixelRatio,isNarrow()?1.5:2)); composer.setSize(w,h);
+    camera.aspect=w/h; camera.fov=isNarrow()?42:32; camera.updateProjectionMatrix();
+  }
+  addEventListener('resize',resize); resize();
+
+  /* scroll choreography: the scale moves to the side opposite the text of each section */
+  const secs=$$('main section');
+  const mm=gsap.matchMedia();
+  const build=(X,S,Y0,Y1,fade)=>{
+    st.x=-X; st.s=S; st.y=Y0; if(fade)gsap.set(canvas,{opacity:1});
+    const tweens=[];
+    tweens.push(gsap.to(st,{rot:Math.PI*5+0.6,ease:'none',scrollTrigger:{trigger:'main',start:'top top',end:'bottom bottom',scrub:1.2}}));
+    secs.forEach((sec,i)=>{
+      if(i===0)return;
+      const prev=(i-1)%2===0?-X:X, next=i%2===0?-X:X;
+      const vars={x:next,ease:'power2.inOut',immediateRender:false,scrollTrigger:{trigger:sec,start:'top 85%',end:'top 25%',scrub:1}};
+      if(i===1){vars.y=Y1}
+      tweens.push(gsap.fromTo(st,i===1?{x:prev,y:Y0}:{x:prev},vars));
+      if(fade&&i===1)tweens.push(gsap.fromTo(canvas,{opacity:1},{opacity:0.38,immediateRender:false,ease:'none',scrollTrigger:{trigger:sec,start:'top 85%',end:'top 25%',scrub:1}}));
+    });
+    return ()=>{tweens.forEach(t=>{t.scrollTrigger&&t.scrollTrigger.kill();t.kill()});gsap.set(canvas,{clearProps:'opacity'})};
+  };
+  mm.add('(min-width: 801px) and (min-aspect-ratio: 11/10)',()=>build(2.6,0.95,-1.1,-1.1,false));
+  mm.add('(max-width: 800px), (max-aspect-ratio: 11/10)',()=>build(0,0.7,2.4,-0.6,true));
+
+  /* click the scale -> it weighs */
+  const ray=new THREE.Raycaster(), v2=new THREE.Vector2();
+  addEventListener('pointerdown',e=>{
+    if(e.target.closest('a,button,.card,.stat,header,form,details,#menu'))return;
+    v2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);
+    ray.setFromCamera(v2,camera);
+    if(ray.intersectObject(scale,true).some(h=>!h.object.userData.floor)){
+      const dir=Math.random()>.5?1:-1;
+      gsap.killTweensOf(st,'tilt');
+      gsap.to(st,{tilt:dir*0.22,duration:.45,ease:'power2.out'});
+      gsap.to(st,{tilt:0,duration:2.4,delay:.5,ease:'elastic.out(1,0.35)'});
+    }
+  });
+  /* hovering a service card makes the scale lean toward it */
+  $$('.card').forEach((c,i)=>{
+    const on=()=>gsap.to(hover,{v:(i%2?-1:1)*0.14,duration:.6,ease:'power2.out'});
+    const off=()=>gsap.to(hover,{v:0,duration:1.2,ease:'elastic.out(1,0.4)'});
+    c.addEventListener('pointerenter',on);c.addEventListener('pointerleave',off);c.addEventListener('focus',on);c.addEventListener('blur',off);
+  });
+
+  /* intro: the scale assembles piece by piece */
+  const parts=[...scale.children.filter(c=>!c.userData.hasOwnProperty('ring')&&!c.userData.floor&&c!==beam),...beam.children];
+  const R=()=>(Math.random()-.5);
+  const saved=parts.map(p=>({o:p.position.clone(),sc:p.scale.clone(),ro:p.rotation.clone(),direct:p.parent===scale}));
+  if(!reduce){
+    parts.forEach((p,i)=>{const s=saved[i];p.position.set(s.o.x+R()*9,s.o.y+R()*7+2,s.o.z+R()*9);p.scale.setScalar(0.001);if(s.direct)p.rotation.set(s.ro.x+R()*6,s.ro.y+R()*6,s.ro.z+R()*6)});
+    rings.forEach(r=>r.scale.setScalar(0.001));
+  }
+  introGo=()=>{
+    if(reduce)return;
+    parts.forEach((p,i)=>{const s=saved[i],d=0.1+i*0.06;
+      gsap.to(p.position,{x:s.o.x,y:s.o.y,z:s.o.z,duration:1.7,delay:d,ease:'power4.out'});
+      gsap.to(p.scale,{x:s.sc.x,y:s.sc.y,z:s.sc.z,duration:1.3,delay:d,ease:'back.out(1.6)'});
+      if(s.direct)gsap.to(p.rotation,{x:s.ro.x,y:s.ro.y,z:s.ro.z,duration:1.7,delay:d,ease:'power3.out'});
+    });
+    rings.forEach((r,i)=>gsap.to(r.scale,{x:1,y:1,z:1,duration:1.8,delay:1.5+i*0.25,ease:'elastic.out(1,0.6)'}));
+    gsap.from(bloom,{strength:1.6,duration:2.4,delay:1.1,ease:'power2.out'});
+    gsap.to(window.__floor.material,{opacity:1,duration:2,delay:0.9});
+  };
+
+  let paused=false;
+  document.addEventListener('visibilitychange',()=>{paused=document.hidden});
+  const clock=new THREE.Clock();
+  (function loop(){
+    requestAnimationFrame(loop);
+    if(paused)return;
+    const t=clock.getElapsedTime();
+    ptr.x+=(ptr.tx-ptr.x)*0.06; ptr.y+=(ptr.ty-ptr.y)*0.06;
+    scale.position.set(st.x,st.y,0); scale.scale.setScalar(st.s);
+    scale.rotation.y=st.rot+ptr.x*0.3; scale.rotation.x=ptr.y*0.06;
+    beam.rotation.z=(reduce?0:Math.sin(t*0.9)*0.035)+ptr.x*0.06+st.tilt+hover.v;
+    pans.forEach((g,i)=>{g.rotation.z=-beam.rotation.z+(reduce?0:Math.sin(t*1.3+i)*0.015)});
+    rings.forEach((r,i)=>{if(!reduce)r.rotation.z+=0.0035*(i%2?-1:1)*(i+1)});
+    mlight.position.set(ptr.x*6,3-ptr.y*3.5,4.5);
+    dust.rotation.y=t*0.02; dust.position.y=Math.sin(t*0.3)*0.15;
+    composer.render();
+  })();
+}
+
+/* ---------- preloader -> hero intro ---------- */
+const pre=$('#pre'), barEl=pre.querySelector('.bar i');
+const fontsReady=Promise.race([document.fonts?document.fonts.ready:Promise.resolve(),new Promise(r=>setTimeout(r,1800))]);
+const minWait=new Promise(r=>setTimeout(r,reduce?0:1100));
+gsap.to(barEl,{width:'100%',duration:reduce?0:1.1,ease:'power1.inOut'});
+Promise.all([fontsReady,minWait]).then(()=>{
+  gsap.to(pre,{opacity:0,duration:reduce?0:0.6,ease:'power2.out',onComplete:()=>pre.remove()});
+  introGo();
+  if(!reduce){
+    const tl=gsap.timeline({delay:0.2});
+    tl.from('#h1 .w > i',{yPercent:115,duration:1,ease:'power4.out',stagger:0.09})
+      .from('#hero .eyebrow,#hero .lead,#hero .actions,#hero .hint',{y:26,opacity:0,duration:.8,ease:'power3.out',stagger:0.1},'-=0.6')
+      .from('header',{y:-30,opacity:0,duration:.8,ease:'power3.out'},'-=1');
+  }
+});
+</script>
+</body>
+</html>
